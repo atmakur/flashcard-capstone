@@ -1,38 +1,55 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom/cjs/react-router-dom.min";
-import { createCard, readDeck } from "../utils/api";
+import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom.min";
+import { readCard, readDeck, createCard, updateCard } from "../utils/api";
 import Breadcrumbs from "./Breadcrumbs";
 
-function AddCard() {
-  const { deckId } = useParams();
+function CardForm() {
+  const { deckId, cardId } = useParams();
+  const history = useHistory();
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
+  const [card, setCard] = useState({});
   const [deck, setDeck] = useState({});
+  const isEditing = !!cardId;
 
   useEffect(() => {
     const abortController = new AbortController();
     async function loadDeck() {
-      const selectedDeck = await readDeck(deckId, abortController.signal);
-      setDeck(selectedDeck);
+      const currDeck = await readDeck(deckId);
+      setDeck(currDeck);
+
+      if (isEditing) {
+        const currCard = await readCard(cardId);
+        setCard(currCard);
+        setFront(currCard.front);
+        setBack(currCard.back);
+      }
     }
     loadDeck();
     return () => abortController.abort();
-  }, [deckId]);
+  }, [deckId, cardId, isEditing]);
 
   const handleFront = ({ target }) => setFront(target.value);
   const handleBack = ({ target }) => setBack(target.value);
   const submitHandler = async (event) => {
     event.preventDefault();
-    await createCard(deckId, { front: front, back: back });
+
+    if (isEditing) {
+      await updateCard({ ...card, front, back });
+    } else {
+      await createCard(deckId, { front, back });
+    }
+
     setFront("");
     setBack("");
+    history.push(`/decks/${deckId}`);
   };
 
   return (
     <>
       <Breadcrumbs name={deck.name} />
       <div className="container w-50">
-        <h3>{deck.name}: Add Card</h3>
+        <h3>{isEditing ? "Edit Card" : "Add Card"}</h3>
         <form name="create" onSubmit={submitHandler}>
           <div className="form-group">
             <label htmlFor="name">Front</label>
@@ -57,7 +74,7 @@ function AddCard() {
             />
           </div>
           <a href={`/decks/${deckId}`} className="btn btn-secondary mr-2">
-            Done
+            Cancel
           </a>
           <button type="submit" className="btn btn-primary">
             Save
@@ -68,4 +85,4 @@ function AddCard() {
   );
 }
 
-export default AddCard;
+export default CardForm;

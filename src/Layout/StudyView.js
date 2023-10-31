@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  useHistory,
-  useParams,
-} from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom.min";
 import { readDeck } from "../utils/api";
 import Breadcrumbs from "./Breadcrumbs";
 
@@ -11,6 +8,7 @@ function StudyView() {
   const [deck, setDeck] = useState({});
   const [index, setIndex] = useState(0);
   const [front, setFront] = useState(true);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const history = useHistory();
 
   useEffect(() => {
@@ -25,21 +23,27 @@ function StudyView() {
   }, [deckId]);
 
   const flipHandle = () => setFront((currFront) => !currFront);
-  const nextHandle = (event) =>
-    setIndex(() => {
-      setFront(true);
-      if (index < deck.cards.length - 1) return index + 1;
-      else {
+  const nextHandle = () => {
+    setFront(true);
+
+    if (index < deck.cards.length - 1) {
+      setIndex((i) => i + 1);
+    } else {
+      if (!showConfirmation) {
+        setShowConfirmation(true);
         if (
-          !window.confirm(
+          window.confirm(
             "Restart cards? \n Click cancel to return to the home page."
           )
         ) {
+          setIndex(0);
+          setShowConfirmation(false);
+        } else {
           history.push("/");
         }
-        return 0;
       }
-    });
+    }
+  };
 
   if (!deck.cards) return "Loading...";
 
@@ -79,15 +83,15 @@ function StudyView() {
             >
               Flip
             </button>
-            {!front ? (
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={nextHandle}
-            >
-              Next
-            </button>
-            ) : ("")}
+            {!front && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={nextHandle}
+              >
+                Next
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom.min";
+import {
+  useHistory,
+  useParams,
+} from "react-router-dom/cjs/react-router-dom.min";
 import { readCard, readDeck, createCard, updateCard } from "../utils/api";
 import Breadcrumbs from "./Breadcrumbs";
 
@@ -36,13 +39,12 @@ function CardForm() {
 
     if (isEditing) {
       await updateCard({ ...card, front, back });
+      history.push(`/decks/${deckId}`);
     } else {
       await createCard(deckId, { front, back });
+      setFront("");
+      setBack("");
     }
-
-    setFront("");
-    setBack("");
-    history.push(`/decks/${deckId}`);
   };
 
   return (
@@ -74,7 +76,7 @@ function CardForm() {
             />
           </div>
           <a href={`/decks/${deckId}`} className="btn btn-secondary mr-2">
-            Cancel
+            {isEditing ? "Cancel" : "Done"}
           </a>
           <button type="submit" className="btn btn-primary">
             Save
